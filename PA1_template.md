@@ -1,17 +1,27 @@
----
-output:
-  html_document:
-    keep_md: yes
----
 # Reproducible Research: Peer Assessment 1
 
 
 ## Loading and preprocessing the data
-```{r LoadData, echo=TRUE}
+
+```r
 #
 # Load packages used in the analysis
 require(plyr)
+```
+
+```
+## Loading required package: plyr
+```
+
+```r
 require(ggplot2)
+```
+
+```
+## Loading required package: ggplot2
+```
+
+```r
 #
 #Initialze constants
 #
@@ -43,35 +53,39 @@ df <- read.csv(projectDataFile)
 cleanData <- df[complete.cases(df),]
 ```
 
-The data for this report was downloaded from the [course repository](`r projectDataURL`) on `r date()`
+The data for this report was downloaded from the [course repository](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) on Mon Aug 11 12:18:37 2014
 
 ## What is mean total number of steps taken per day?
 
 To address this question, we use ddply to sum the steps by date and then calculate the mean and mediam total steps per  day.
 
-```{r MeanStepsPerDay}
+
+```r
 stepsPerDay <- ddply(cleanData, .(date),summarise, steps=sum(steps, na.rm=TRUE))
 meanSteps <- mean(stepsPerDay$steps)
 medianSteps <- median(stepsPerDay$steps )
 ```
 
-The mean number of steps per day is `r sprintf("%5.0f",meanSteps)`.   The median number of steps per day is `r sprintf("%5.0f",medianSteps)`.
+The mean number of steps per day is 10766.   The median number of steps per day is 10765.
 
 The following is a histogram of the total steps per day.
 
-```{r PlotStepsPerDay}
+
+```r
 hist( stepsPerDay$steps, col=blueTransparent, xlim=xlim,xlab="Steps", 
       main="Histogram of Total Steps Per Day",breaks=histoBreaks)
 abline(v=meanSteps, col="blue")
 text(meanSteps+2100, 9,  sprintf("Mean=%5.0f", meanSteps),col="blue")
-
 ```
+
+![plot of chunk PlotStepsPerDay](./PA1_template_files/figure-html/PlotStepsPerDay.png) 
 
 
 ## What is the average daily activity pattern?
 The following is a time series plot of the mean number of steps for each 5 minute interval in a day.
 
-```{r DailyActivityPattern}
+
+```r
 #
 # Using ddply, calculate the mean number of steps per each interval.
 #
@@ -98,22 +112,26 @@ abline(v=intervalWithMax, col="blue")
 text(intervalWithMax+350,maxAvgSteps,sprintf("Max at interval %d at %s",intervalWithMax,maxTime), col="blue")
 ```
 
+![plot of chunk DailyActivityPattern](./PA1_template_files/figure-html/DailyActivityPattern.png) 
+
 To calculate the maximum interval, I found the maximum value for all intervals and then found the interval that had this maximum value.
-The maximum # of avg steps for all intervals is `r sprintf("%5.0f",maxAvgSteps)` in interval `r sprintf("%5.0f",intervalWithMax)`
+The maximum # of avg steps for all intervals is   206 in interval   835
 
 ## Imputing missing values
-```{r}
+
+```r
 #
 # count number number of missing values in the dataset
 #
 missingValues <- sum(is.na(df$steps))
 ```
 
-In the original dataset, there are `r missingValues` missing i.e. NA values.
+In the original dataset, there are 2304 missing i.e. NA values.
 
 To impute the data set, I chose to replace "NA" values with the mean values for the interval for the null value.  The rationale for this is that activity for a time of day should be fairly consistent across days.
 
-```{r ImputingValues}
+
+```r
 #
 # Copy the original dataframe to a new data frame that will hold the imputed dataset
 #
@@ -142,9 +160,10 @@ medianImputedSteps <- median(imputedStepsPerDay$steps )
 compareImputed <- merge(imputedStepsPerDay, stepsPerDay, by="date", all=TRUE)
 ```
 
-The mean steps per day of the source data is `r sprintf("%5.0f",meanSteps)` and the mean of the imputed steps per days is `r sprintf("%5.0f",meanImputedSteps)`. The median steps per day of the source data is `r sprintf("%5.0f",medianSteps)` and the mean of the imputed steps per days is `r sprintf("%5.0f",medianImputedSteps)`. The impact to the overall mean and median was neglible; however, the distribution was altered because there are more days which centered around the means shown below. 
+The mean steps per day of the source data is 10766 and the mean of the imputed steps per days is 10766. The median steps per day of the source data is 10765 and the mean of the imputed steps per days is 10766. The impact to the overall mean and median was neglible; however, the distribution was altered because there are more days which centered around the means shown below. 
 
-```{r Imputed2}
+
+```r
 ggplot(compareImputed, aes(x="Imputed", y=steps.x, fill="Imputed")) + 
   geom_boxplot() + 
   geom_boxplot(aes(x="Original", y=steps.y, fill="Original")) +
@@ -153,11 +172,18 @@ ggplot(compareImputed, aes(x="Imputed", y=steps.x, fill="Imputed")) +
   scale_fill_discrete("Type of Data")
 ```
 
+```
+## Warning: Removed 8 rows containing non-finite values (stat_boxplot).
+```
+
+![plot of chunk Imputed2](./PA1_template_files/figure-html/Imputed2.png) 
+
 ## Are there differences in activity patterns between weekdays and weekends?
 
 In looking at the plots of the average activity levels for weekday and weekend activties, weekday activity begins earlier in the day; but; weekend activity is higher later in the day as show below.
 
-```{r WeekDayVsWeekend}
+
+```r
 #
 #create a factor variable to indicate if the day is a weekend
 #
@@ -171,3 +197,5 @@ intervalActivity <- ddply(cleanData, .(interval,typeOfDay),summarise, mean.steps
 #
 ggplot(intervalActivity,aes(x=interval, y=mean.steps) )+geom_line()+facet_grid(typeOfDay ~.)
 ```
+
+![plot of chunk WeekDayVsWeekend](./PA1_template_files/figure-html/WeekDayVsWeekend.png) 
